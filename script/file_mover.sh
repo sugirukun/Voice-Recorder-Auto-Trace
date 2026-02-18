@@ -160,6 +160,97 @@ for audio_file_full_path in "${AUDIO_FILES[@]}"; do
     fi
 done # 個別ファイル移動ループの終了
 
+# --- エンジン選択ダイアログ (AppleScript) ---
+echo "エンジン選択ダイアログを表示します..."
+
+ENGINE_CHOICE=$(osascript <<'APPLESCRIPT'
+set choiceList to {"おすすめ（追加コストなし ※Claude Proサブスク必要）— Whisper + マスク + Claude校正 + Claude要約", "全部Gemini — Gemini文字起こし + Gemini校正 + Gemini要約（⚠音声は外部送信）", "Gemini+Claude — Gemini文字起こし + Claude校正 + Gemini要約（⚠音声は外部送信）", "両方で文字起こし — Whisper&Gemini + Claude校正 + Claude要約（⚠音声は外部送信）", "カスタム — config.sh の設定をそのまま使用"}
+set userChoice to choose from list choiceList ¬
+    with title "MyVoiceRecoser - エンジン選択" ¬
+    with prompt "文字起こし・要約の構成を選択してください：" ¬
+    default items {item 1 of choiceList}
+if userChoice is false then
+    return "cancelled"
+end if
+return item 1 of userChoice
+APPLESCRIPT
+)
+
+osascript_exit_code=$?
+echo "ダイアログ選択結果: ${ENGINE_CHOICE} (終了コード: ${osascript_exit_code})"
+
+if [ $osascript_exit_code -ne 0 ] || [ "$ENGINE_CHOICE" = "cancelled" ]; then
+    echo "ダイアログがキャンセルされました。処理を中止します。"
+    exit 0
+fi
+
+# Gemini使用時の警告ダイアログ（共通関数）
+show_gemini_warning() {
+    local confirm_result
+    confirm_result=$(osascript <<'APPLESCRIPT'
+display dialog "⚠ 注意: Gemini APIを使用すると、音声データがGoogleのサーバーに送信されます。
+
+録音内にパスワード・電話番号・口座番号などの個人情報が含まれる場合、情報漏洩のリスクがあります。
+
+続行しますか？" ¬
+    with title "Gemini API - セキュリティ警告" ¬
+    buttons {"キャンセル", "続行"} ¬
+    default button "キャンセル" ¬
+    with icon caution
+APPLESCRIPT
+)
+    local confirm_exit=$?
+    if [ $confirm_exit -ne 0 ] || [ "$confirm_result" = "キャンセル" ]; then
+        echo "Gemini API の使用がキャンセルされました。処理を中止します。"
+        exit 0
+    fi
+    echo "Gemini API の使用が確認されました。"
+}
+
+case "$ENGINE_CHOICE" in
+    おすすめ*)
+        echo "構成: おすすめ（追加コストなし）を選択"
+        export TRANSCRIBE_ENGINE="whisper"
+        export ENABLE_MASKING="true"
+        export PROOFREAD_ENGINE="claude"
+        export SUMMARIZE_ENGINE="claude"
+        ;;
+    全部Gemini*)
+        echo "構成: 全部Gemini を選択 — 警告ダイアログを表示します"
+        show_gemini_warning
+        export TRANSCRIBE_ENGINE="gemini"
+        export ENABLE_MASKING="false"
+        export PROOFREAD_ENGINE="gemini"
+        export SUMMARIZE_ENGINE="gemini"
+        ;;
+    Gemini+Claude*)
+        echo "構成: Gemini+Claude を選択 — 警告ダイアログを表示します"
+        show_gemini_warning
+        export TRANSCRIBE_ENGINE="gemini"
+        export ENABLE_MASKING="false"
+        export PROOFREAD_ENGINE="claude"
+        export SUMMARIZE_ENGINE="gemini"
+        ;;
+    両方で文字起こし*)
+        echo "構成: 両方で文字起こし を選択 — 警告ダイアログを表示します"
+        show_gemini_warning
+        export TRANSCRIBE_ENGINE="both"
+        export ENABLE_MASKING="true"
+        export PROOFREAD_ENGINE="claude"
+        export SUMMARIZE_ENGINE="claude"
+        ;;
+    カスタム*)
+        echo "構成: カスタム（config.sh の設定値をそのまま使用）"
+        ;;
+esac
+
+echo "--- 適用されるエンジン設定 ---"
+echo "TRANSCRIBE_ENGINE: ${TRANSCRIBE_ENGINE}"
+echo "PROOFREAD_ENGINE: ${PROOFREAD_ENGINE}"
+echo "SUMMARIZE_ENGINE: ${SUMMARIZE_ENGINE}"
+echo "ENABLE_MASKING: ${ENABLE_MASKING}"
+echo "-----------------------------"
+
 # --- Pythonスクリプトの呼び出し (AUDIO_DEST_DIR を対象とする) ---
 # 個別ファイルごとではなく、一度だけ呼び出すように変更
 # AUDIO_FILES 配列の要素数に関わらず、常にPythonスクリプトを呼び出す

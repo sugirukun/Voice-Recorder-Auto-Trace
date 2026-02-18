@@ -6,15 +6,14 @@
     <string>com.example.applaud.filemover</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/ABSOLUTE/PATH/TO/YOUR/AppLaud/script/file_mover.sh</string>
-        <string>--config</string>
-        <string>/ABSOLUTE/PATH/TO/YOUR/AppLaud/script/config.sh</string>
+        <string>/bin/zsh</string>
+        <string>/Users/m1mac/.local/bin/applaud_launcher.sh</string>
     </array>
     <key>RunAtLoad</key>
     <false/>
     <key>WatchPaths</key>
     <array>
-        <string>/Volumes/YOUR_RECORDER_NAME</string>
+        <string>/Volumes/NO NAME</string>
     </array>
     <key>StandardOutPath</key>
     <string>/tmp/com.example.applaud.filemover.stdout.log</string>
@@ -23,13 +22,9 @@
     <key>EnvironmentVariables</key>
     <dict>
         <key>PATH</key>
-        <string>/bin:/usr/bin:/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/sbin</string>
+        <string>/bin:/usr/bin:/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/Users/m1mac/Library/Python/3.9/bin</string>
     </dict>
-    <key>WorkingDirectory</key>
-    <string>/ABSOLUTE/PATH/TO/YOUR/AppLaud/script</string>
     <key>SessionCreate</key>
     <true/>
-    <key>StandardInPath</key>
-    <string>/dev/null</string>
 </dict>
-</plist> 
+</plist>
