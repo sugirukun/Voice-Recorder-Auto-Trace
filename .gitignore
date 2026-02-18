@@ -1,3 +1,10 @@
+# macOS
+.DS_Store
+
+# Output data
+audio/
+markdown_output/
+
 # Temporary files
 debug_outputs/find_results.txt
 .tmp_chunks/
