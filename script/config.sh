@@ -2,9 +2,10 @@
 
 # --- 設定（すべてexportで環境変数化）---
 
-# --- TODO: Setting ---
 # Google Gemini APIキー（TRANSCRIBE_ENGINE=gemini または SUMMARIZE_ENGINE=gemini 使用時に必要）
-export GOOGLE_API_KEY="YOUR_GOOGLE_API_KEY"
+# ※ セキュリティのため、ここにはキーを書かないでください。
+# ※ ~/.zshrc に以下のように設定してください：
+#    echo 'export GOOGLE_API_KEY="取得したキー"' >> ~/.zshrc
 
 # --- TODO: Setting ---
 # 文字起こしエンジン: "whisper"（ローカル・無料）または "gemini"（API）
