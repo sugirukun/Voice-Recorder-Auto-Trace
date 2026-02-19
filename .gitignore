@@ -26,3 +26,21 @@ debug/processed_log.jsonl
 # Documents - typically should be version controlled
 # document/tree.txt
 # document/task.md
+
+# === SECURITY: 機密ファイル除外 ===
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*_credentials.json
+*-service-account.json
+google-credentials.json
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
