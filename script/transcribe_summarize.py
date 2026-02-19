@@ -19,7 +19,23 @@ except ImportError:
     AudioSegment = None
 
 # Constants
+import tempfile as _tempfile
 CHUNK_MAX_DURATION_MS = 20 * 60 * 1000  # 20 minutes in milliseconds
+
+
+def load_audio_segment(audio_file_path):
+    """AudioSegmentでファイルを読み込む。ADPCM等で失敗時はffmpegでPCM変換してリトライ。"""
+    try:
+        return AudioSegment.from_file(audio_file_path)
+    except Exception:
+        print(f"  pydub直接読み込み失敗。ffmpegでPCM変換を試みます: {audio_file_path}")
+        converted_path = pathlib.Path(_tempfile.gettempdir()) / f"applaud_converted_{pathlib.Path(audio_file_path).stem}.wav"
+        subprocess.run(
+            ["ffmpeg", "-y", "-i", str(audio_file_path), "-acodec", "pcm_s16le", "-ar", "16000", "-ac", "1", str(converted_path)],
+            check=True, capture_output=True,
+        )
+        print(f"  PCM変換成功: {converted_path}")
+        return AudioSegment.from_file(converted_path)
 OVERLAP_MS = 1 * 60 * 1000  # 1 minute in milliseconds
 MAX_FILENAME_LENGTH = 50  # Max length for the AI generated part of the filename
 
@@ -205,12 +221,7 @@ def transcribe_chunk_gemini(model, audio_chunk_path, transcription_output_path):
 def transcribe_audio_gemini(model, audio_file_path, temp_chunk_dir_path):
     """Gemini API を使った文字起こし（チャンク分割対応）。"""
     print(f"Loading audio file: {audio_file_path}...")
-    try:
-        audio = AudioSegment.from_file(audio_file_path)
-    except Exception as e:
-        raise ValueError(
-            f"Could not read audio file {audio_file_path}. Ensure ffmpeg is installed. Error: {e}"
-        )
+    audio = load_audio_segment(audio_file_path)
 
     duration_ms = len(audio)
     print(f"Audio duration: {duration_ms / 1000 / 60:.2f} minutes")
@@ -495,7 +506,7 @@ def main():
             )
             return
         genai.configure(api_key=api_key)
-        gemini_model = genai.GenerativeModel("gemini-1.5-flash")
+        gemini_model = genai.GenerativeModel("gemini-2.0-flash")
 
     processing_dir = pathlib.Path(args.audio_processing_dir)
     markdown_output_dir = pathlib.Path(args.markdown_output_dir)
@@ -539,7 +550,7 @@ def main():
                     if AudioSegment is None:
                         raise ValueError("pydub is required for Gemini transcription. Run: pip install pydub")
                     # Check duration for chunking
-                    audio_for_duration_check = AudioSegment.from_file(original_audio_path)
+                    audio_for_duration_check = load_audio_segment(original_audio_path)
                     if len(audio_for_duration_check) > CHUNK_MAX_DURATION_MS:
                         temp_chunk_processing_dir.mkdir(parents=True, exist_ok=True)
                         cleanup_temp_dir_on_success = True
@@ -556,7 +567,7 @@ def main():
                     print("  [both] Geminiで文字起こし中...")
                     if AudioSegment is None:
                         raise ValueError("pydub is required for Gemini transcription. Run: pip install pydub")
-                    audio_for_duration_check = AudioSegment.from_file(original_audio_path)
+                    audio_for_duration_check = load_audio_segment(original_audio_path)
                     if len(audio_for_duration_check) > CHUNK_MAX_DURATION_MS:
                         temp_chunk_processing_dir.mkdir(parents=True, exist_ok=True)
                         cleanup_temp_dir_on_success = True
