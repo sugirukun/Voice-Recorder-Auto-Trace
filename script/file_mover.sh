@@ -167,7 +167,7 @@ done # 個別ファイル移動ループの終了
 echo "エンジン選択ダイアログを表示します..."
 
 ENGINE_CHOICE=$(osascript <<'APPLESCRIPT'
-set choiceList to {"おすすめ（追加コストなし ※Claude Proサブスク必要）— Whisper + マスク + Claude校正 + Claude要約", "全部Gemini — Gemini文字起こし + Gemini校正 + Gemini要約（⚠音声は外部送信）", "Gemini+Claude — Gemini文字起こし + Claude校正 + Gemini要約（⚠音声は外部送信）", "両方で文字起こし — Whisper&Gemini + Claude校正 + Claude要約（⚠音声は外部送信）", "カスタム — config.sh の設定をそのまま使用"}
+set choiceList to {"ファイル移動のみ — 文字起こし・要約はしない", "おすすめ（追加コストなし ※Claude Proサブスク必要）— Whisper + マスク + Claude校正 + Claude要約", "全部Gemini — Gemini文字起こし + Gemini校正 + Gemini要約（⚠音声は外部送信）", "Gemini+Claude — Gemini文字起こし + Claude校正 + Gemini要約（⚠音声は外部送信）", "両方で文字起こし — Whisper&Gemini + Claude校正 + Claude要約（⚠音声は外部送信）", "カスタム — config.sh の設定をそのまま使用"}
 set userChoice to choose from list choiceList ¬
     with title "MyVoiceRecoser - エンジン選択" ¬
     with prompt "文字起こし・要約の構成を選択してください：" ¬
@@ -211,6 +211,11 @@ APPLESCRIPT
 }
 
 case "$ENGINE_CHOICE" in
+    ファイル移動のみ*)
+        echo "構成: ファイル移動のみ を選択 — 文字起こし・要約をスキップして終了します"
+        echo "\nファイルの移動が完了しました。"
+        exit 0
+        ;;
     おすすめ*)
         echo "構成: おすすめ（追加コストなし）を選択"
         export TRANSCRIBE_ENGINE="whisper"
