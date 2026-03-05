@@ -12,7 +12,7 @@
 # 5. Pythonスクリプトを呼び出して文字起こしと要約を行う。
 
 # 終了時（正常・エラー・Terminal強制終了問わず）ロックファイルを削除
-trap 'rm -rf /tmp/applaud_launcher.lockdir' EXIT
+# ロックはapplaud_launcher.shの60秒タイムアウトで自然失効させる（ここでは削除しない）
 
 echo "引数: $@"
 
